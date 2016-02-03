@@ -1,0 +1,7 @@
+0. Air
+1. Grass
+2. Dirt
+3. Stone
+4. CobbleStone
+5. Wood
+6. Planks
