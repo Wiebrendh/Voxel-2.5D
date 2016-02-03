@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
+using System.Threading;
 using System.Collections.Generic;
+using System.Collections;
 
 public class WorldGeneration : MonoBehaviour
 {
@@ -113,11 +115,11 @@ public class WorldGeneration : MonoBehaviour
         // Create chunk meshes
         for (int i = 0; i < worldWidthInChunks; i++)
         {
-            CreateChunkMesh(i * chunkWidth);
+            StartCoroutine(CreateChunkMesh(i * chunkWidth));
         }
 	}
 
-    void CreateChunkMesh (int start)
+    IEnumerator CreateChunkMesh (int start)
     {
         // Data
         List<Vector3> vertices = new List<Vector3>();
@@ -627,6 +629,8 @@ public class WorldGeneration : MonoBehaviour
         collider.sharedMesh = colliderMesh;
 
         #endregion
+        
+        yield return 0;
     }
 
     public void UpdateChunk (int chunk, bool updateSides)
@@ -635,7 +639,7 @@ public class WorldGeneration : MonoBehaviour
         Destroy(GameObject.Find("Chunk" + chunk));
 
         // Create new chunk
-        CreateChunkMesh(chunk);
+        StartCoroutine(CreateChunkMesh(chunk));
         
         // If updateSides equals true
         if (updateSides)
