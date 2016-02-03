@@ -629,13 +629,25 @@ public class WorldGeneration : MonoBehaviour
         #endregion
     }
 
-    public void UpdateChunk (int chunk)
+    public void UpdateChunk (int chunk, bool updateSides)
     {
         // Get rid of the old chunk
         Destroy(GameObject.Find("Chunk" + chunk));
 
         // Create new chunk
         CreateChunkMesh(chunk);
+        
+        // If updateSides equals true
+        if (updateSides)
+        {
+            // Left side
+            if ((chunk - 8) >= 0)
+                UpdateChunk(chunk - 8, false);
+                
+            // Right side
+            if ((chunk + 8) <= chunkWidth * worldWidthInChunks)
+                UpdateChunk(chunk + 8, false);
+        }
     }
 
     void OnGUI ()
@@ -656,7 +668,7 @@ public class WorldGeneration : MonoBehaviour
             {
                 worldBlocks[currX, currY] = blocks[0];
                 int id = int.Parse(hit.transform.name.Replace("Chunk", ""));
-                UpdateChunk(id);
+                UpdateChunk(id, true);
             }
         }
     }
@@ -671,7 +683,6 @@ public class Biome
     public int averageHeight; // The average height
     public int maxHeightDiff;
     public int minHeightDiff;
-
 
 }
 

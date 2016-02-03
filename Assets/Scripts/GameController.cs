@@ -12,7 +12,7 @@ public class GameController : MonoBehaviour
 
     [Header("Objects")]
     public GameObject player;
-    public GameObject cameratest;
+    public GameObject camera;
 
     [Header("Data")]
     public Vector2 spawnPoint;
@@ -26,7 +26,7 @@ public class GameController : MonoBehaviour
         spawnPoint = CalculateSpawn();
 
         // Set camera to correct position
-        cameratest.transform.position = new Vector3(spawnPoint.x, spawnPoint.y, -12.5f);
+        camera.transform.position = new Vector3(spawnPoint.x, spawnPoint.y, -12.5f);
 
         // Spawn player
         player = Instantiate(playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
