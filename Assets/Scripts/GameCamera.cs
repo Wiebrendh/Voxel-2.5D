@@ -25,6 +25,6 @@ public class GameCamera : MonoBehaviour
             wantedPos.y = 6.5f;
         
         // Lerp to position
-        this.transform.position = Vector3.Lerp(this.transform.position, wantedPos, smoothFollowSpeed * Time.deltaTime);
+        this.transform.position = wantedPos;
 	}
 }
