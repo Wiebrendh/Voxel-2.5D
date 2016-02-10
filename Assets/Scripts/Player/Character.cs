@@ -4,7 +4,7 @@ using System;
 
 public class Character : MonoBehaviour 
 {
-
+/*
     WorldGeneration world;
     float worldWidth;
 
@@ -146,5 +146,5 @@ public class Character : MonoBehaviour
 
         // Apply distance
         distances[3] = newDistance;
-    }
+    }*/
 }

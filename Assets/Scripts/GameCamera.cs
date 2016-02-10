@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameCamera : MonoBehaviour
 {
-
+/*
     public GameObject player;
     public float smoothFollowSpeed;
 
@@ -26,5 +26,5 @@ public class GameCamera : MonoBehaviour
         
         // Lerp to position
         this.transform.position = wantedPos;
-	}
+	}*/
 }

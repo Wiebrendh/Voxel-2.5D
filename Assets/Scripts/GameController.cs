@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-
-
 public class GameController : MonoBehaviour
 {
-
+/*
     [Header("Scripts")]
     public WorldGeneration world;
     public GameCamera gameCamera;
@@ -47,5 +45,5 @@ public class GameController : MonoBehaviour
         temp.y = 100; // HAVE TO CALCULATE THE FIRST AVAILABLE Y TO STAND ON
 
         return temp;
-    }
+    }*/
 }

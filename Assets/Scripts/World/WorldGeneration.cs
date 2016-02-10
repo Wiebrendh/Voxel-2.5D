@@ -1,36 +1,33 @@
 ﻿using System;
 using UnityEngine;
-using System.Threading;
 using System.Collections.Generic;
-using System.Collections;
 
-public class WorldGeneration : MonoBehaviour
+public class WorldGeneration : MonoBehaviour 
 {
-    
+
     // Generation data
-    [SerializeField] int worldMaxHeight;
-    [SerializeField] public int chunkWidth;
-    [SerializeField] public int worldWidthInChunks;
+    [SerializeField] int chunkSize;
+    [SerializeField] int worldWidth;
+    [SerializeField] int worldHeight;
+    
+    // Blocks and biomes 
     [SerializeField] Block[] blocks;
     [SerializeField] Biome[] biomes;
-    [SerializeField] Material[] materials;
-
-    // Generated data
-    [SerializeField] Biome[] worldBiomes;
-    [SerializeField] public Block[,] worldBlocks;
-    [SerializeField] List<GameObject> chunks = new List<GameObject>();
-
-    // TEST
-    int currX, currY;
-	            
-	void Start ()
-    {   
+    [SerializeField] Material[] materials;    
+    
+    // World data
+    Biome[] worldBiomes;
+    Block[,] worldBlocks;
+    GameObject[,] worldChunks;
+    
+    void Start ()
+    {
         // Calculate width and assign world 2D array
-        int width = worldWidthInChunks * chunkWidth;
-        worldBlocks = new Block[width, worldMaxHeight];
+        int width = worldWidth * chunkSize;
+        worldBlocks = new Block[width, worldHeight * chunkSize];
 
         // Set all blocks in world to air at start
-        for (int y = 0; y < worldMaxHeight; y++)
+        for (int y = 0; y < worldHeight * chunkSize; y++)
         {
             for (int x = 0; x < width; x++)
             {
@@ -39,7 +36,7 @@ public class WorldGeneration : MonoBehaviour
         }
 
         // Set biomes
-        worldBiomes = new Biome[worldWidthInChunks];
+        worldBiomes = new Biome[worldWidth];
         int wantedLength = 0;
         Biome biomeType = null;
         for (int b = 0; b < worldBiomes.Length; b++)
@@ -63,7 +60,7 @@ public class WorldGeneration : MonoBehaviour
             AnimationCurve worldGenDirt = new AnimationCurve();
 
             // Add keyframes in the animationcurve and generate height
-            for (int i = 0; i < chunkWidth * worldWidthInChunks; i += 8)
+            for (int i = 0; i < chunkSize * worldWidth; i += 8)
             {
                 // Create animationcurve for grass
                 { 
@@ -89,7 +86,7 @@ public class WorldGeneration : MonoBehaviour
             }
 
             // Use keyframe data to insert blocks into world array
-            for (int l = 0; l < chunkWidth * worldWidthInChunks; l++)
+            for (int l = 0; l < chunkSize * worldWidth; l++)
             {
                 // Grass
                 worldBlocks[l, (int)worldGenGrass.Evaluate(l)] = blocks[1];
@@ -111,571 +108,143 @@ public class WorldGeneration : MonoBehaviour
                 }
             }
         }
-
-        // Create chunk meshes
-        for (int i = 0; i < worldWidthInChunks; i++)
+        
+        for (int x = 0; x < worldWidth; x++)
         {
-            StartCoroutine(CreateChunkMesh(i * chunkWidth));
+            for (int y = 0; y < worldHeight; y++)
+            {
+                CalculateChunkMeshData(x, y);
+            }
         }
-	}
-
-    IEnumerator CreateChunkMesh (int start)
+    }
+    
+    struct ChunkMeshData
     {
-        // Data
-        List<Vector3> vertices = new List<Vector3>();
-        List<Vector2> uv = new List<Vector2>();
-        List<int>[] triangles = new List<int>[8]{ new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>() };
-        GameObject chunk;
-        Mesh mesh;
-
-        // Set data
-        chunk = new GameObject("Chunk" + start);
-        mesh = chunk.AddComponent<MeshFilter>().mesh;
-        chunk.transform.position = new Vector3(start, 0, 0);
-        chunk.AddComponent<MeshRenderer>().materials = materials;
-        chunk.transform.parent = this.transform;
-
+        // Visual
+        public List<Vector3> vertices;
+        public List<int>[] triangles;
+        public List<Vector2> uv;
+        
         // Collider
-        MeshCollider collider = chunk.AddComponent<MeshCollider>();
-        List<Vector3> colliderVertices = new List<Vector3>();
-        List<int> colliderTriangles = new List<int>();
-        Mesh colliderMesh = new Mesh();
-
-        // Set submesh data
-        mesh.Clear();
-        mesh.subMeshCount = 8;
-
-        // Insert data to lists
+        public List<Vector3> colliderVertices;
+        public List<int> colliderTriangles;
+    }
+    
+    void CalculateChunkMeshData (int startX, int startY)
+    {
+        ChunkMeshData chunkData = new ChunkMeshData(); 
+        
+        // Visual data
+        chunkData.vertices = new List<Vector3>();
+        chunkData.triangles = new List<int>[8]{ new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>() };
+        chunkData.uv = new List<Vector2>();
+        
+        // Collider data
+        chunkData.colliderVertices = new List<Vector3>();
+        chunkData.colliderTriangles = new List<int >();
+        
         int squareCount = 0;
-        for (int x = 0; x < chunkWidth; x++)
+        for (int x = 0; x < chunkSize; x++)
         {
-            for (int y = 0; y < worldMaxHeight - 1; y++)
+            for (int y = 0; y < chunkSize; y++)
             {
-
-                #region Front
-
-                // Check if the current x&y is not air
-                if (worldBlocks[start + x, y].id != 0)
-                {                    
-                    // Add vertices
-                    Vector3[] tempVertices = new Vector3[]
-                    {
-                        new Vector3(x - .5f, y - .5f, -.5f),
-                        new Vector3(x - .5f, y + .5f, -.5f),
-                        new Vector3(x + .5f, y + .5f, -.5f),
-                        new Vector3(x + .5f, y - .5f, -.5f)
-                    };
-
-                    vertices.AddRange(tempVertices);
-                    colliderVertices.AddRange(tempVertices);
-
-                    // Collider triangles
-                    if (worldBlocks[start + x, y].id != 0)
-                    {
-                        colliderTriangles.AddRange(new int[]
-                        {
-                            squareCount * 4,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 2,
-                            (squareCount * 4) + 3
-                        });
-                    }
-
-                    // Add triangles
-                    switch (worldBlocks[start + x, y].id)
-                    {
-                        case 1: // Grass
-                            {
-                                triangles[1].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 2: // Dirt
-                            {
-                                triangles[2].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 3: // Stone
-                            {
-                                triangles[3].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                    }
-
-                    uv.AddRange(new Vector2[]
-                    {
-                        new Vector3(0f, 0f),
-                        new Vector3(0f, 1f),
-                        new Vector3(1f, 1f),
-                        new Vector3(1f, 0f)
-                    });
-
-                    // Increase squarecount
-                    squareCount++;
-                }
-
-                #endregion
-
-                #region Top
-
-                // Check if the current x&y is not air
-                if (worldBlocks[start + x, y + 1].id == 0)
-                {
-                    // Add vertices
-                    Vector3[] tempVertices = new Vector3[]
-                    {
-                        new Vector3(x - .5f, y + .5f, -.5f),
-                        new Vector3(x - .5f, y + .5f, .5f),
-                        new Vector3(x + .5f, y + .5f, .5f),
-                        new Vector3(x + .5f, y + .5f, -.5f)
-                    };
-
-                    vertices.AddRange(tempVertices);
-                    colliderVertices.AddRange(tempVertices);
-
-                    // Collider triangles
-                    if (worldBlocks[start + x, y].id != 0)
-                    {
-                        colliderTriangles.AddRange(new int[]
-                        {
-                            squareCount * 4,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 2,
-                            (squareCount * 4) + 3
-                        });
-                    }
-
-                    // Add triangles
-                    switch (worldBlocks[start + x, y].id)
-                    {
-                        case 1: // Grass
-                            {
-                                triangles[0].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-
-                                
-                            }
-                            break;
-                        case 2: // Dirt
-                            {
-                                triangles[2].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 3: // Stone
-                            {
-                                triangles[3].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                    }
-
-                    uv.AddRange(new Vector2[]
-                    {
-                        new Vector3(0f, 0f),
-                        new Vector3(0f, 1f),
-                        new Vector3(1f, 1f),
-                        new Vector3(1f, 0f)
-                    });
-
-                    // Increase squarecount
-                    squareCount++;
-                }
-
-                #endregion
-
-                #region Bottom
-
-                // Check if the current x&y is not air
-                if (y > 0 && worldBlocks[start + x, y - 1].id == 0 || y == 0)
-                {
-                    // Add vertices
-                    Vector3[] tempVertices = new Vector3[]
-                    {
-                        new Vector3(x - .5f, y - .5f, .5f),
-                        new Vector3(x + .5f, y - .5f, .5f),
-                        new Vector3(x + .5f, y - .5f, -.5f),
-                        new Vector3(x - .5f, y - .5f, -.5f)
-                    };
-
-                    vertices.AddRange(tempVertices);
-                    colliderVertices.AddRange(tempVertices);
-
-                    // Collider triangles
-                    if (worldBlocks[start + x, y].id != 0)
-                    {
-                        colliderTriangles.AddRange(new int[]
-                        {
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 1,
-                            squareCount * 4,
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 2,
-                            (squareCount * 4) + 1
-                        });
-                    }
-
-                    // Add triangles
-                    switch (worldBlocks[start + x, y].id)
-                    {
-                        case 1: // Grass
-                            {
-                                triangles[1].AddRange(new int[]
-                                {
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    squareCount * 4,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 1
-                                });
-
-
-                            }
-                            break;
-                        case 2: // Dirt
-                            {
-                                triangles[2].AddRange(new int[]
-                                {
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    squareCount * 4,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 1
-                                });
-                            }
-                            break;
-                        case 3: // Stone
-                            {
-                                triangles[3].AddRange(new int[]
-                                {
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    squareCount * 4,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 1
-                                });
-                            }
-                            break;
-                    }
-
-                    uv.AddRange(new Vector2[]
-                    {
-                        new Vector3(0f, 0f),
-                        new Vector3(0f, 1f),
-                        new Vector3(1f, 1f),
-                        new Vector3(1f, 0f)
-                    });
-
-                    // Increase squarecount
-                    squareCount++;
-                }
-
-                #endregion
-
-                #region Left
-
-                // Check if the current x&y is not air
-                if (start + x > 0 && worldBlocks[start + x - 1, y].id == 0 || start + x == 0)
-                {
-                    // Add vertices
-                    Vector3[] tempVertices = new Vector3[]
-                    {
-                        new Vector3(x - .5f, y - .5f, .5f),
-                        new Vector3(x - .5f, y + .5f, .5f),
-                        new Vector3(x - .5f, y + .5f, -.5f),
-                        new Vector3(x - .5f, y - .5f, -.5f)
-                    };
-
-                    vertices.AddRange(tempVertices);
-                    colliderVertices.AddRange(tempVertices);
-
-                    // Collider triangles
-                    if (worldBlocks[start + x, y].id != 0)
-                    {
-                        colliderTriangles.AddRange(new int[]
-                        {
-                            squareCount * 4,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 2,
-                            (squareCount * 4) + 3
-                        });
-                    }
-
-                    // Add triangles
-                    switch (worldBlocks[start + x, y].id)
-                    {
-                        case 1: // Grass
-                            {
-                                triangles[1].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-
-
-                            }
-                            break;
-                        case 2: // Dirt
-                            {
-                                triangles[2].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 3: // Stone
-                            {
-                                triangles[3].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                    }
-
-                    uv.AddRange(new Vector2[]
-                    {
-                        new Vector3(0f, 0f),
-                        new Vector3(0f, 1f),
-                        new Vector3(1f, 1f),
-                        new Vector3(1f, 0f)
-                    });
-
-                    // Increase squarecount
-                    squareCount++;
-                }
-
-                #endregion
-
-                #region Right
-
-                // Check if the current x&y is not air
-                if (start + x < chunkWidth * worldWidthInChunks - 1 && worldBlocks[start + x + 1, y].id == 0 || start + x == chunkWidth * worldWidthInChunks - 1)
-                {
-                    // Add vertices
-                    Vector3[] tempVertices = new Vector3[]
-                    {
-                        new Vector3(x + .5f, y - .5f, -.5f),
-                        new Vector3(x + .5f, y + .5f, -.5f),
-                        new Vector3(x + .5f, y + .5f, .5f),
-                        new Vector3(x + .5f, y - .5f, .5f)
-                    };
-
-                    vertices.AddRange(tempVertices);
-                    colliderVertices.AddRange(tempVertices);
-
-                    // Collider triangles
-                    if (worldBlocks[start + x, y].id != 0)
-                    {
-                        colliderTriangles.AddRange(new int[]
-                        {
-                            squareCount * 4,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 3,
-                            (squareCount * 4) + 1,
-                            (squareCount * 4) + 2,
-                            (squareCount * 4) + 3
-                        });
-                    }
-
-                    // Add triangles
-                    switch (worldBlocks[start + x, y].id)
-                    {
-                        case 1: // Grass
-                            {
-                                triangles[1].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 2: // Dirt
-                            {
-                                triangles[2].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                        case 3: // Stone
-                            {
-                                triangles[3].AddRange(new int[]
-                                {
-                                    squareCount * 4,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 3,
-                                    (squareCount * 4) + 1,
-                                    (squareCount * 4) + 2,
-                                    (squareCount * 4) + 3
-                                });
-                            }
-                            break;
-                    }
-
-                    uv.AddRange(new Vector2[]
-                    {
-                        new Vector3(0f, 0f),
-                        new Vector3(0f, 1f),
-                        new Vector3(1f, 1f),
-                        new Vector3(1f, 0f)
-                    });
-
-                    // Increase squarecount
-                    squareCount++;
-                }
-
-                #endregion
+                CalculateFace (x, y, chunkData, squareCount);
             }
         }
-
-        #region Apply mesh data
-
-        mesh.vertices = vertices.ToArray();
-        mesh.SetTriangles(triangles[0], 0);
-        mesh.SetTriangles(triangles[1], 1);
-        mesh.SetTriangles(triangles[2], 2);
-        mesh.SetTriangles(triangles[3], 3);
-        mesh.SetTriangles(triangles[4], 4);
-        mesh.SetTriangles(triangles[5], 5);
-        mesh.SetTriangles(triangles[6], 6);
-        mesh.SetTriangles(triangles[7], 7);
-        mesh.uv = uv.ToArray();
-        mesh.Optimize();
-        mesh.RecalculateNormals();
-
-        #endregion
-
-        #region Apply collider data
-
-        colliderMesh.vertices = colliderVertices.ToArray();
-        colliderMesh.triangles = colliderTriangles.ToArray();
-        collider.sharedMesh = colliderMesh;
-
-        #endregion
-        
-        yield return 0;
-    }
-
-    public void UpdateChunk (int chunk, bool updateSides)
+    }   
+    
+    void CalculateFace (int x, int y, ref ChunkMeshData chunkData, ref int squareCount)
     {
-        // Get rid of the old chunk
-        Destroy(GameObject.Find("Chunk" + chunk));
-
-        // Create new chunk
-        StartCoroutine(CreateChunkMesh(chunk));
-        
-        // If updateSides equals true
-        if (updateSides)
+        // Add vertices
+        Vector3[] tempVertices = new Vector3[]
         {
-            // Left side
-            if ((chunk - 8) >= 0)
-                UpdateChunk(chunk - 8, false);
-                
-            // Right side
-            if ((chunk + 8) <= chunkWidth * worldWidthInChunks)
-                UpdateChunk(chunk + 8, false);
-        }
-    }
+            new Vector3(x, y, -.5f),
+            new Vector3(x, y + 1f, -.5f),
+            new Vector3(x + 1f, y + 1f, -.5f),
+            new Vector3(x + 1f, y, -.5f)
+        };	  
 
-    void OnGUI ()
-    {
-        GUI.Label(new Rect(10, 10, 200, 32), "Current block selected: (" + currX.ToString() + "|" + currY.ToString() + ")");        
-    }
+        chunkData.vertices.AddRange(tempVertices);
+        chunkData.colliderVertices.AddRange(tempVertices);
 
-    void Update ()
-    {
-        RaycastHit hit;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, 100))
+        // Collider triangles
+        if (worldBlocks[x, y].id != 0)
         {
-            currX = Mathf.RoundToInt(hit.point.x);
-            currY = Mathf.RoundToInt(hit.point.y);
-
-            if (Input.GetButtonDown("Fire1"))
+            chunkData.colliderTriangles.AddRange(new int[]
             {
-                worldBlocks[currX, currY] = blocks[0];
-                int id = int.Parse(hit.transform.name.Replace("Chunk", ""));
-                UpdateChunk(id, true);
-            }
+                squareCount * 4,
+                (squareCount * 4) + 1,
+                (squareCount * 4) + 3,
+                (squareCount * 4) + 1,
+                (squareCount * 4) + 2,
+                (squareCount * 4) + 3
+            });
         }
-    }
+
+        // Add triangles
+        switch (worldBlocks[x, y].id)
+        {
+            case 1: // Grass
+                {
+                    chunkData.triangles[1].AddRange(new int[]
+                    {
+                        squareCount * 4,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 3,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 2,
+                        (squareCount * 4) + 3
+                    });
+                }
+                break;
+            case 2: // Dirt
+                {
+                    chunkData.triangles[2].AddRange(new int[]
+                    {
+                        squareCount * 4,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 3,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 2,
+                        (squareCount * 4) + 3
+                    });
+                }
+                break;
+            case 3: // Stone
+                {
+                    chunkData.triangles[3].AddRange(new int[]
+                    {
+                        squareCount * 4,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 3,
+                        (squareCount * 4) + 1,
+                        (squareCount * 4) + 2,
+                        (squareCount * 4) + 3
+                    });
+                }
+                break;
+        }
+
+        chunkData.uv.AddRange(new Vector2[]
+        {
+            new Vector3(0f, 0f),
+            new Vector3(0f, 1f),
+            new Vector3(1f, 1f),
+            new Vector3(1f, 0f)
+        });
+
+        // Increase squareCount
+        squareCount++;	
+    } 
+}
+
+[Serializable]
+public class Block
+{
+
+    public string name; // Block name
+    public int id; // Block ID
+
 }
 
 [Serializable]
@@ -685,16 +254,7 @@ public class Biome
     public string name; // Biome name
 
     public int averageHeight; // The average height
-    public int maxHeightDiff;
-    public int minHeightDiff;
-
-}
-
-[Serializable]
-public class Block
-{
-
-    public string name;
-    public int id;
+    public int maxHeightDiff; // Highest value
+    public int minHeightDiff; // Lowest value
 
 }
