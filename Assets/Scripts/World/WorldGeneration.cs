@@ -148,7 +148,7 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int y = 0; y < chunkSize; y++)
             {
-                CalculateFace (x, y, chunkData, squareCount);
+                CalculateFace (x, y, ref chunkData, ref squareCount);
             }
         }
     }   
