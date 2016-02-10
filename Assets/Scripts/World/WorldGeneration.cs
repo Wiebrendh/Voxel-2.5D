@@ -16,9 +16,12 @@ public class WorldGeneration : MonoBehaviour
     [SerializeField] Material[] materials;    
     
     // World data
-    Biome[] worldBiomes;
+    public Biome[] worldBiomes;
     Block[,] worldBlocks;
     GameObject[,] worldChunks;
+    
+    // TEST
+    public List<ChunkMeshData> queu;
     
     void Start ()
     {
@@ -109,6 +112,7 @@ public class WorldGeneration : MonoBehaviour
             }
         }
         
+        // Loop to create chunks
         for (int x = 0; x < worldWidth; x++)
         {
             for (int y = 0; y < worldHeight; y++)
@@ -118,8 +122,11 @@ public class WorldGeneration : MonoBehaviour
         }
     }
     
-    struct ChunkMeshData
+    [Serializable]
+    public struct ChunkMeshData
     {
+        public int x, y;
+        
         // Visual
         public List<Vector3> vertices;
         public List<int>[] triangles;
@@ -148,9 +155,13 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int y = 0; y < chunkSize; y++)
             {
+                // Calculate front
                 CalculateFace (x, y, ref chunkData, ref squareCount);
             }
         }
+        
+        // Add the ChunkMeshData to the queu
+        queu.Add(chunkData);
     }   
     
     void CalculateFace (int x, int y, ref ChunkMeshData chunkData, ref int squareCount)
@@ -182,46 +193,26 @@ public class WorldGeneration : MonoBehaviour
         }
 
         // Add triangles
-        switch (worldBlocks[x, y].id)
+        List<int> triangles = new List<int>().AddRange(new int[]
+        {
+            squareCount * 4,
+            (squareCount * 4) + 1,
+            (squareCount * 4) + 3,
+            (squareCount * 4) + 1,
+            (squareCount * 4) + 2,
+            (squareCount * 4) + 3
+        });
+        
+        switch (worldBlocks[start + x, y].id)
         {
             case 1: // Grass
-                {
-                    chunkData.triangles[1].AddRange(new int[]
-                    {
-                        squareCount * 4,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 3,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 2,
-                        (squareCount * 4) + 3
-                    });
-                }
+                    triangles[1].AddRange(triangles.ToArray());
                 break;
             case 2: // Dirt
-                {
-                    chunkData.triangles[2].AddRange(new int[]
-                    {
-                        squareCount * 4,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 3,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 2,
-                        (squareCount * 4) + 3
-                    });
-                }
+                    triangles[2].AddRange(triangles.ToArray());
                 break;
             case 3: // Stone
-                {
-                    chunkData.triangles[3].AddRange(new int[]
-                    {
-                        squareCount * 4,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 3,
-                        (squareCount * 4) + 1,
-                        (squareCount * 4) + 2,
-                        (squareCount * 4) + 3
-                    });
-                }
+                    triangles[3].AddRange(triangles.ToArray());
                 break;
         }
 
@@ -235,6 +226,16 @@ public class WorldGeneration : MonoBehaviour
 
         // Increase squareCount
         squareCount++;	
+    }
+    
+    void CreateChunkMesh (ChunkMeshData chunkData)
+    {
+        // Data
+        GameObject chunk = new GameObject("Chunk" + chunkData.x);
+        Mesh mesh = chunk.AddComponent<MeshFilter>().mesh;
+        chunk.transform.position = new Vector3(chunkData.x, chunkData.y, 0);
+        chunk.AddComponent<MeshRenderer>().materials = materials;
+        chunk.transform.parent = this.transform;
     } 
 }
 
