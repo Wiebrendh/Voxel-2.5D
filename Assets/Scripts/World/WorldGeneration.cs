@@ -19,7 +19,7 @@ public class WorldGeneration : MonoBehaviour
     Biome[] worldBiomes;
     Block[,] worldBlocks;
     GameObject[,] worldChunks;
-    [SerializeField] chunkCount;
+    [SerializeField] int chunkCount;
      
     // TEST
     public bool doneCreatingChunks;
