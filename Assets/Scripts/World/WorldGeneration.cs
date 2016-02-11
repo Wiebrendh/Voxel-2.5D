@@ -16,7 +16,7 @@ public class WorldGeneration : MonoBehaviour
     [SerializeField] Material[] materials;    
     
     // World data
-    Biome[] worldBiomes;
+    [SerializeField]Biome[] worldBiomes;
     Block[,] worldBlocks;
     GameObject[,] worldChunks;
     [SerializeField] int chunkCount;
@@ -68,15 +68,15 @@ public class WorldGeneration : MonoBehaviour
             AnimationCurve worldGenDirt = new AnimationCurve();
 
             // Add keyframes in the animationcurve and generate height
-            for (int i = 0; i < chunkSize * worldWidth; i += 8)
+            for (int i = 0; i < worldWidth; i++)
             {
                 // Create animationcurve for grass
                 { 
                     // Get current biome
-                    Biome currentBiome = worldBiomes[i / 15];
+                    Biome currentBiome = worldBiomes[i];
 
                     // Determine height
-                    int height = 64;
+                    int height = 0;
                     if (UnityEngine.Random.Range(0, 1) == 0)
                         height = currentBiome.averageHeight + UnityEngine.Random.Range(currentBiome.minHeightDiff, currentBiome.maxHeightDiff + 1);
                     else
@@ -99,21 +99,7 @@ public class WorldGeneration : MonoBehaviour
                 // Grass
                 worldBlocks[l, (int)worldGenGrass.Evaluate(l)] = blocks[1];
 
-                // Dirt
-                int dirt = (int)worldGenDirt.Evaluate(l);
-                while (worldBlocks[l, dirt] == blocks[0])
-                {
-                    worldBlocks[l, dirt] = blocks[2];
-                    dirt++;
-                }
-
-                // Stone
-                int stone = 0;
-                while (worldBlocks[l, stone] == blocks[0])
-                {
-                    worldBlocks[l, stone] = blocks[3];
-                    stone++;
-                }
+                
             }
         }
         
@@ -125,13 +111,22 @@ public class WorldGeneration : MonoBehaviour
                 CalculateChunkMeshData(x, y);
             }
         }
-    }
+    } // Start
     
     void Update ()
     {
+        // Check if generation chunks is done
         if (queu.Count == chunkCount)
             doneCreatingChunks = true;
-    }
+
+        // Check if doneCreatingChunks == true, if so check if queu is not empty
+        if (doneCreatingChunks && queu.Count > 0)
+        {
+            CreateChunkMesh(queu[0]);
+            queu.RemoveAt(0);
+        }
+
+    } // Update
     
     [Serializable]
     public struct ChunkMeshData
@@ -146,12 +141,16 @@ public class WorldGeneration : MonoBehaviour
         // Collider
         public List<Vector3> colliderVertices;
         public List<int> colliderTriangles;
-    }
+    } // ChunkMeshData
     
     void CalculateChunkMeshData (int startX, int startY)
     {
-        ChunkMeshData chunkData = new ChunkMeshData(); 
-        
+        ChunkMeshData chunkData = new ChunkMeshData();
+
+        // Set chunkData position
+        chunkData.x = startX * chunkSize;
+        chunkData.y = startY * chunkSize;
+
         // Visual data
         chunkData.vertices = new List<Vector3>();
         chunkData.triangles = new List<int>[8]{ new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>() };
@@ -167,13 +166,14 @@ public class WorldGeneration : MonoBehaviour
             for (int y = 0; y < chunkSize; y++)
             {
                 // Calculate front
-                CalculateFace (startX + x, startY + y, ref chunkData, ref squareCount);
+                CalculateFace (x, y, ref chunkData, ref squareCount);
             }
         }
         
         // Add the ChunkMeshData to the queu
         queu.Add(chunkData);
-    }   
+
+    }    // CalculateMeshData
     
     void CalculateFace (int x, int y, ref ChunkMeshData chunkData, ref int squareCount)
     {
@@ -202,28 +202,28 @@ public class WorldGeneration : MonoBehaviour
         
         switch (worldBlocks[x, y].id) // Visual triangles
         {
-            case 0: // Grass top
+            case 1: // Grass top
                 chunkData.triangles[0].AddRange(tempTriangles.ToArray());
                 break;
-            case 1: // Grass front
+            case 2: // Grass front
                 chunkData.triangles[1].AddRange(tempTriangles.ToArray());
                 break;
-            case 2: // Dirt
+            case 3: // Dirt
                 chunkData.triangles[2].AddRange(tempTriangles.ToArray());
                 break;
-            case 3: // Stone
+            case 4: // Stone
                 chunkData.triangles[3].AddRange(tempTriangles.ToArray());
                 break;
-            case 4: // Cobblestone
+            case 5: // Cobblestone
                 chunkData.triangles[4].AddRange(tempTriangles.ToArray());
                 break;
-            case 5: // Wood top
+            case 6: // Wood top
                 chunkData.triangles[5].AddRange(tempTriangles.ToArray());
                 break;
-            case 6: // Wood front
+            case 7: // Wood front
                 chunkData.triangles[6].AddRange(tempTriangles.ToArray());
                 break;
-            case 7: // Planks
+            case 8: // Planks
                 chunkData.triangles[7].AddRange(tempTriangles.ToArray());
                 break;
         }        
@@ -240,20 +240,50 @@ public class WorldGeneration : MonoBehaviour
         
         // Increase squareCount                
         squareCount++;	
-    }
-                        
+    } // CalculateFace 
                     
     void CreateChunkMesh (ChunkMeshData chunkData)
     {
         // Data
-        GameObject chunk = new GameObject("Chunk" + chunkData.x);
+        GameObject chunk = new GameObject("Chunk(" + chunkData.x + "|" + chunkData.y + ")");
         Mesh mesh = chunk.AddComponent<MeshFilter>().mesh;
         chunk.transform.position = new Vector3(chunkData.x, chunkData.y, 0);
         chunk.AddComponent<MeshRenderer>().materials = materials;
         chunk.transform.parent = this.transform;
-        
-        
-    } 
+
+        // Set submesh data
+        mesh.Clear();
+        mesh.subMeshCount = 8;
+
+        // Insert data
+        mesh.vertices = chunkData.vertices.ToArray();
+        mesh.SetTriangles(chunkData.triangles[0], 0);
+        mesh.SetTriangles(chunkData.triangles[1], 1);
+        mesh.SetTriangles(chunkData.triangles[2], 2);
+        mesh.SetTriangles(chunkData.triangles[3], 3);
+        mesh.SetTriangles(chunkData.triangles[4], 4);
+        mesh.SetTriangles(chunkData.triangles[5], 5);
+        mesh.SetTriangles(chunkData.triangles[6], 6);
+        mesh.SetTriangles(chunkData.triangles[7], 7);
+        mesh.uv = chunkData.uv.ToArray();
+
+        // Do other shit
+        mesh.Optimize();
+        mesh.RecalculateNormals();
+
+    }  // CreateChunkMesh
+
+    void OnDrawGizmos ()
+    {
+        for (int x = 0; x < worldWidth * chunkSize; x++)
+        {
+            for (int y = 0; y < worldHeight * chunkSize; y++)
+            {
+                if (worldBlocks[x, y].id == 0)
+                    Gizmos.DrawSphere(new Vector2(x, y), .5f);
+            }
+        }
+    }
 }
 
 [Serializable]

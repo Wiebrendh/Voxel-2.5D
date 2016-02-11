@@ -617,8 +617,7 @@ public class WorldGenerationOld : MonoBehaviour
         mesh.SetTriangles(triangles[6], 6);
         mesh.SetTriangles(triangles[7], 7);
         mesh.uv = uv.ToArray();
-        mesh.Optimize();
-        mesh.RecalculateNormals();
+        c
 
         #endregion
 
