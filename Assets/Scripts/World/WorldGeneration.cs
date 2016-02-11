@@ -156,7 +156,7 @@ public class WorldGeneration : MonoBehaviour
             for (int y = 0; y < chunkSize; y++)
             {
                 // Calculate front
-                CalculateFace (x, y, ref chunkData, ref squareCount);
+                CalculateFace (startX + x, startY + y, ref chunkData, ref squareCount);
             }
         }
         
@@ -173,27 +173,13 @@ public class WorldGeneration : MonoBehaviour
             new Vector3(x, y + 1f, -.5f),
             new Vector3(x + 1f, y + 1f, -.5f),
             new Vector3(x + 1f, y, -.5f)
-        };	  
-
-        chunkData.vertices.AddRange(tempVertices);
-        chunkData.colliderVertices.AddRange(tempVertices);
-
-        // Collider triangles
-        if (worldBlocks[x, y].id != 0)
-        {
-            chunkData.colliderTriangles.AddRange(new int[]
-            {
-                squareCount * 4,
-                (squareCount * 4) + 1,
-                (squareCount * 4) + 3,
-                (squareCount * 4) + 1,
-                (squareCount * 4) + 2,
-                (squareCount * 4) + 3
-            });
-        }
-
+        };
+        chunkData.vertices.AddRange(tempVertices); // Visual vertices
+        chunkData.colliderVertices.AddRange(tempVertices); // Collider vertices
+        
         // Add triangles
-        List<int> triangles = new List<int>().AddRange(new int[]
+        List<int> tempTriangles = new List<int>();
+        tempTriangles.AddRange(new int[]
         {
             squareCount * 4,
             (squareCount * 4) + 1,
@@ -201,21 +187,38 @@ public class WorldGeneration : MonoBehaviour
             (squareCount * 4) + 1,
             (squareCount * 4) + 2,
             (squareCount * 4) + 3
-        });
+        });        
         
-        switch (worldBlocks[start + x, y].id)
+        switch (worldBlocks[x, y].id) // Visual triangles
         {
-            case 1: // Grass
-                    triangles[1].AddRange(triangles.ToArray());
+            case 0: // Grass top
+                chunkData.triangles[0].AddRange(tempTriangles.ToArray());
+                break;
+            case 1: // Grass front
+                chunkData.triangles[1].AddRange(tempTriangles.ToArray());
                 break;
             case 2: // Dirt
-                    triangles[2].AddRange(triangles.ToArray());
+                chunkData.triangles[2].AddRange(tempTriangles.ToArray());
                 break;
             case 3: // Stone
-                    triangles[3].AddRange(triangles.ToArray());
+                chunkData.triangles[3].AddRange(tempTriangles.ToArray());
                 break;
-        }
-
+            case 4: // Cobblestone
+                chunkData.triangles[4].AddRange(tempTriangles.ToArray());
+                break;
+            case 5: // Wood top
+                chunkData.triangles[5].AddRange(tempTriangles.ToArray());
+                break;
+            case 6: // Wood front
+                chunkData.triangles[6].AddRange(tempTriangles.ToArray());
+                break;
+            case 7: // Planks
+                chunkData.triangles[7].AddRange(tempTriangles.ToArray());
+                break;
+        }        
+        chunkData.colliderTriangles.AddRange(tempTriangles.ToArray()); // Collider triangles
+        
+        // Add UV
         chunkData.uv.AddRange(new Vector2[]
         {
             new Vector3(0f, 0f),
@@ -223,11 +226,12 @@ public class WorldGeneration : MonoBehaviour
             new Vector3(1f, 1f),
             new Vector3(1f, 0f)
         });
-
-        // Increase squareCount
+        
+        // Increase squareCount                
         squareCount++;	
     }
-    
+                        
+                    
     void CreateChunkMesh (ChunkMeshData chunkData)
     {
         // Data
