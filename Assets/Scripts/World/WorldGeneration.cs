@@ -16,15 +16,20 @@ public class WorldGeneration : MonoBehaviour
     [SerializeField] Material[] materials;    
     
     // World data
-    public Biome[] worldBiomes;
+    Biome[] worldBiomes;
     Block[,] worldBlocks;
     GameObject[,] worldChunks;
-    
+    [SerializeField] chunkCount;
+     
     // TEST
+    public bool doneCreatingChunks;
     public List<ChunkMeshData> queu;
     
     void Start ()
     {
+        // Calculate chunkCount
+        chunkCount = worldWidth * worldHeight;
+        
         // Calculate width and assign world 2D array
         int width = worldWidth * chunkSize;
         worldBlocks = new Block[width, worldHeight * chunkSize];
@@ -120,6 +125,12 @@ public class WorldGeneration : MonoBehaviour
                 CalculateChunkMeshData(x, y);
             }
         }
+    }
+    
+    void Update ()
+    {
+        if (queu.Count == chunkCount)
+            doneCreatingChunks = true;
     }
     
     [Serializable]
@@ -240,6 +251,8 @@ public class WorldGeneration : MonoBehaviour
         chunk.transform.position = new Vector3(chunkData.x, chunkData.y, 0);
         chunk.AddComponent<MeshRenderer>().materials = materials;
         chunk.transform.parent = this.transform;
+        
+        
     } 
 }
 
