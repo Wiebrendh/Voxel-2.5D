@@ -179,6 +179,7 @@ public class WorldGeneration : MonoBehaviour
         chunkData.colliderTriangles = new List<int >();
         
         int squareCount = 0;
+		int squareCountCollider = 0;
         for (int x = 0; x < chunkSize; x++)
         {
             for (int y = 0; y < chunkSize; y++)
@@ -187,23 +188,23 @@ public class WorldGeneration : MonoBehaviour
 				if (thisBlock.id != 0) // Dont do these calculations if the block is air 
 				{
 	                // Calculate front
-	            	CalculateFace (x, y, ref chunkData, ref squareCount, 0);
+					CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 0);
 
 					// Calculate top
 					if (worldHeight * chunkSize == chunkData.y + y + 1 || worldBlocks[chunkData.x + x, chunkData.y + y + 1].id == 0)
-						CalculateFace (x, y, ref chunkData, ref squareCount, 1);
+						CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 1);
 
 					// Calculate bottom
 					if (chunkData.y + y  == 0 || worldBlocks[chunkData.x + x, chunkData.y + y - 1].id == 0)
-						CalculateFace (x, y, ref chunkData, ref squareCount, 2);
+						CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 2);
 
 					// Calculate left 
 					if (chunkData.x + x == 0 || worldBlocks[chunkData.x + x - 1, chunkData.y + y].id == 0)
-						CalculateFace (x, y, ref chunkData, ref squareCount, 3);
+						CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 3);
 					
 					// Calculate right 
 					if (worldWidth * chunkSize == chunkData.x + x + 1 || worldBlocks[chunkData.x + x + 1, chunkData.y + y].id == 0)
-						CalculateFace (x, y, ref chunkData, ref squareCount, 4);
+						CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 4);
 				}
             }
         }
@@ -213,7 +214,7 @@ public class WorldGeneration : MonoBehaviour
 
     } // CalculateMeshData
     
-    void CalculateFace (int x, int y, ref ChunkMeshData chunkData, ref int squareCount, int side)
+	void CalculateFace (int x, int y, ref ChunkMeshData chunkData, ref int squareCount, ref int squareCountCollider, int side)
     {
 		Vector3[] tempVertices =  new Vector3[0];
 		switch (side)
@@ -280,20 +281,43 @@ public class WorldGeneration : MonoBehaviour
 		}
 
         chunkData.vertices.AddRange(tempVertices); // Visual vertices
-        chunkData.colliderVertices.AddRange(tempVertices); // Collider vertices
+
+		// Only add if this is not the front face
+		if (side != 0)
+        	chunkData.colliderVertices.AddRange(tempVertices); // Collider vertices
         
-        // Add triangles
-        List<int> tempTriangles = new List<int>();
-        tempTriangles.AddRange(new int[]
-        {
-            squareCount * 4,
-            (squareCount * 4) + 1,
-            (squareCount * 4) + 3,
-            (squareCount * 4) + 1,
-            (squareCount * 4) + 2,
-            (squareCount * 4) + 3
-		});        
-		chunkData.colliderTriangles.AddRange(tempTriangles.ToArray()); // Collider triangles        
+        
+               
+
+		// Only add if this is not the front face
+		if (side != 0)
+		{
+			// Triangles for collider
+			List<int> colliderTriangles = new List<int>();
+			colliderTriangles.AddRange(new int[]
+			{
+				squareCountCollider * 4,
+				(squareCountCollider * 4) + 1,
+				(squareCountCollider * 4) + 3,
+				(squareCountCollider * 4) + 1,
+				(squareCountCollider * 4) + 2,
+				(squareCountCollider * 4) + 3
+			}); 
+
+			chunkData.colliderTriangles.AddRange(colliderTriangles.ToArray()); // Collider triangles 
+		}
+
+		// Add triangles
+		List<int> tempTriangles = new List<int>();
+		tempTriangles.AddRange(new int[]
+		{
+			squareCount * 4,
+			(squareCount * 4) + 1,
+			(squareCount * 4) + 3,
+			(squareCount * 4) + 1,
+			(squareCount * 4) + 2,
+			(squareCount * 4) + 3
+		}); 
 
 		switch (worldBlocks [chunkData.x + x, chunkData.y + y].id) // Insert triangles into correct chunkData.triangles
 		{
@@ -327,7 +351,9 @@ public class WorldGeneration : MonoBehaviour
         });
         
         // Increase squareCount                
-        squareCount++;	
+        squareCount++;
+		if (side != 0)
+			squareCountCollider++;
 
     } // CalculateFace 
                     
@@ -341,7 +367,6 @@ public class WorldGeneration : MonoBehaviour
         chunk.transform.parent = this.transform;
 
         // Set submesh data
-        mesh.Clear();
         mesh.subMeshCount = 6;
 
         // Insert data
@@ -353,6 +378,18 @@ public class WorldGeneration : MonoBehaviour
         mesh.SetTriangles(chunkData.triangles[4], 4);
 		mesh.SetTriangles(chunkData.triangles[5], 5);
         mesh.uv = chunkData.uv.ToArray();
+
+		// Collider mesh
+		Mesh colliderMesh = new Mesh();
+		colliderMesh.vertices = chunkData.colliderVertices.ToArray();
+		colliderMesh.triangles = chunkData.colliderTriangles.ToArray ();
+
+		// Collider object
+		GameObject chunkCollider = new GameObject ();
+		chunkCollider.AddComponent<MeshCollider> ().sharedMesh = colliderMesh;
+		chunkCollider.transform.parent = chunk.transform;
+		chunkCollider.transform.position = chunk.transform.position;
+		chunkCollider.name = "Collider";
 
         // Do other shit
         mesh.RecalculateNormals();
