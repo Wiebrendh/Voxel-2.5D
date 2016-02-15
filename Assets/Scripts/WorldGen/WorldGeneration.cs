@@ -54,16 +54,12 @@ public class WorldGeneration : MonoBehaviour
             // Set random biome length
             if (wantedLength == 0)
             {
-				wantedLength = UnityEngine.Random.Range (3, 6);
+				wantedLength = UnityEngine.Random.Range (3, 5);
                 biomeType = biomes[UnityEngine.Random.Range(0, biomes.Length)];
-
-				if (UnityEngine.Random.Range(0, 3) == 50)
-					generateForest = false;
             }
 
             // Set data
             worldBiomes[b] = biomeType;
-			worldBiomes[b].forest = generateForest;
             wantedLength--;
         }
 
@@ -416,6 +412,10 @@ public class WorldGeneration : MonoBehaviour
 
 	void InsertTree (int x, int y)
 	{
+		// Sometimes randomly skip tree
+		if (UnityEngine.Random.Range (0, 11) == 0)
+			return;
+
 		List<Vector2> temp = new List<Vector2> ();
 		temp.AddRange (new Vector2[] 
 		{
@@ -483,6 +483,6 @@ public class Biome
     public int maxHeightDiff; // Highest value
     public int minHeightDiff; // Lowest value
 
-	public bool forest = true; // Bool to toggle forest
+	public bool forest; // Bool to toggle forest
 
 }

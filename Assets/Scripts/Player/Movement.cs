@@ -30,7 +30,7 @@ public class Movement : MonoBehaviour
 				moveDirection.x *= sprintMultiplier;
 
 			if (Input.GetButton("Jump"))
-				moveDirection.y = jump;			
+				moveDirection.y = jump;				
 		}
 
 		moveDirection.y -= gravity * Time.deltaTime;
