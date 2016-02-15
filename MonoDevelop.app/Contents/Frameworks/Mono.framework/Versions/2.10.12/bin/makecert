@@ -1,0 +1,3 @@
+#!/bin/sh
+umask 077
+exec "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/bin/mono $MONO_OPTIONS "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/lib/mono/4.0/makecert.exe "$@"

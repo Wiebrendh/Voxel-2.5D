@@ -1,0 +1,11 @@
+prefix=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Fontconfig
+Description: Font configuration and customization library
+Version: 2.8.0
+Libs: -L${libdir} -lfontconfig
+Libs.private:  -lexpat -L/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12/lib -lfreetype -lz -lbz2 -liconv
+Cflags: -I${includedir}

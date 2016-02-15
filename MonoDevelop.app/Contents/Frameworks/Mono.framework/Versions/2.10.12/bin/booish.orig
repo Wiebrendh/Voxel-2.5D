@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ -x /Library/Frameworks/Mono.framework/Versions/2.10.12/bin/cli ]; then
+
+    env /Library/Frameworks/Mono.framework/Versions/2.10.12/bin/cli $MONO_OPTIONS /Library/Frameworks/Mono.framework/Versions/2.10.12/lib/boo/booish.exe $BOOISH_OPTIONS "$@"
+
+else
+
+    env /Library/Frameworks/Mono.framework/Versions/2.10.12/bin/mono $MONO_OPTIONS /Library/Frameworks/Mono.framework/Versions/2.10.12/lib/boo/booish.exe $BOOISH_OPTIONS "$@"
+
+fi
+
+
+

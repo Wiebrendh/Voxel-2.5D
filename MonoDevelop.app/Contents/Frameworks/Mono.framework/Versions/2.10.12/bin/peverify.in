@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /Library/Frameworks/Mono.framework/Versions/2.10.12/bin/pedump $MONO_OPTIONS --verify metadata,code "$@"

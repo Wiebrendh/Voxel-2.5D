@@ -1,0 +1,9 @@
+prefix=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12
+exec_prefix=${prefix}
+libdir=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12/lib
+sourcesdir=${libdir}/monodoc/sources
+
+Name: Monodoc
+Description: Monodoc - Mono Documentation Tools
+Version: 2.10.12
+Libs: /r:${prefix}/lib/mono/monodoc/monodoc.dll 

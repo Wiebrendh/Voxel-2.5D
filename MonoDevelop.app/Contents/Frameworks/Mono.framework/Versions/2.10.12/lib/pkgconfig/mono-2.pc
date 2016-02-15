@@ -1,0 +1,11 @@
+prefix=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12
+exec_prefix=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12
+libdir=${prefix}/lib
+includedir=${prefix}/include/mono-2.0
+sysconfdir=${prefix}/etc
+
+Name: Mono
+Description: Mono Runtime
+Version: 2.10.12
+Libs: -L${libdir}  -lmono-2.0 -pthread   -lpthread
+Cflags: -I${includedir} -D_THREAD_SAFE

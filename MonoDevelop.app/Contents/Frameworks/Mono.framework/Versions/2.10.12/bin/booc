@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ -x "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/bin/cli ]; then
+
+    env "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/bin/cli $MONO_OPTIONS "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/lib/boo/booc.exe $BOOC_OPTIONS "$@"
+
+else
+
+    env "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/bin/mono $MONO_OPTIONS "/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework"/Versions/2.10.12/lib/boo/booc.exe $BOOC_OPTIONS "$@"
+
+fi
+
+
+

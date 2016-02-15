@@ -1,0 +1,7 @@
+prefix=/Users/user/Desktop/voxel-2.5d/MonoDevelop.app/Contents/MacOS/../Frameworks/Mono.framework/Versions/2.10.12
+assemblies_dir=${prefix}/lib/mono-source-libs
+Sources=${assemblies_dir}/Options.cs
+
+Name: Mono.Options
+Description: Command Line Parsing Library
+Version: 0.2.2

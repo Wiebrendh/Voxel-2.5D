@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /Library/Frameworks/Mono.framework/Versions/2.10.12/bin/mono /Library/Frameworks/Mono.framework/Versions/2.10.12/lib/ironruby/ir64.exe "$@"
