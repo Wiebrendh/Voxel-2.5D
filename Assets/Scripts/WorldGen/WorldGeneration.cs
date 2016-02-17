@@ -48,7 +48,7 @@ public class WorldGeneration : MonoBehaviour
         worldBiomes = new Biome[worldWidth];
 		bool generateForest = true;
         int wantedLength = 0;
-        Biome biomeType = null;
+        Biome biomeType = new Biome();
         for (int b = 0; b < worldBiomes.Length; b++)
         {
             // Set random biome length
@@ -493,6 +493,9 @@ public class WorldGeneration : MonoBehaviour
 
 	void OnDrawGizmos ()
 	{
+		if (!Application.isPlaying)
+			return;
+
 		for (int x = 0; x < worldWidth * chunkSize; x++)
 		{
 			for (int y = 0; y < worldHeight * chunkSize; y++)
@@ -506,7 +509,7 @@ public class WorldGeneration : MonoBehaviour
 }
 
 [Serializable]
-public class Block
+public struct Block
 {
 
     public string name; // Block name
@@ -517,7 +520,7 @@ public class Block
 }
 
 [Serializable]
-public class Biome
+public struct Biome
 {
 
     public string name; // Biome name
