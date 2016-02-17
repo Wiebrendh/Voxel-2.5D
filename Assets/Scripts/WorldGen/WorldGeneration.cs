@@ -16,15 +16,15 @@ public class WorldGeneration : MonoBehaviour
     [SerializeField] Material[] materials;    
     
     // World data
-    public Biome[] worldBiomes;
+    Biome[] worldBiomes;
     Block[,] worldBlocks;
     GameObject[,] worldChunks;
-    [SerializeField] int chunkCount;
+    int chunkCount;
      
     // Generation data
     bool doneCreatingChunks;
     List<ChunkMeshData> queu = new List<ChunkMeshData>();
-	public int maxChunksPerFrame;
+	[SerializeField] int maxChunkUpdatesPerFrame;
     
     void Start ()
     {
@@ -145,16 +145,22 @@ public class WorldGeneration : MonoBehaviour
             doneCreatingChunks = true;
 
 		// Create/update chunks
-		for (int i = 0; i < maxChunksPerFrame; i++) 
+		for (int i = 0; i < maxChunkUpdatesPerFrame; i++) 
 		{
 			// Return if queu is empty
 			if (queu.Count <= 0)
-				return;
+				break;
 
 			CreateChunkMesh(queu[0]);
 			queu.RemoveAt(0);
 		}
 
+		/// TESTST
+		if (Input.GetKeyDown (KeyCode.P))
+		{
+			worldBlocks [0, 0].damage--;
+			Debug.Log(worldBlocks [0, 0].damage);
+		}
 
     } // Update
     
@@ -184,7 +190,7 @@ public class WorldGeneration : MonoBehaviour
 
         // Visual data
         chunkData.vertices = new List<Vector3>();
-        chunkData.triangles = new List<int>[8]{ new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>() };
+		chunkData.triangles = new List<int>[9]{ new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>(), new List<int>() };
         chunkData.uv = new List<Vector2>();
         
         // Collider data
@@ -204,7 +210,7 @@ public class WorldGeneration : MonoBehaviour
 					CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 0);
 
 					// Calculate top
-					if (worldHeight * chunkSize == chunkData.y + y + 1 || worldBlocks[chunkData.x + x, chunkData.y + y + 1].id == 0)
+					if (worldHeight * chunkSize == chunkData.y + y + 1 || worldBlocks[chunkData.x + x, chunkData.y + y + 1].id == 0 || worldBlocks[chunkData.x + x, chunkData.y + y + 1].id == 7 && worldBlocks[chunkData.x + x, chunkData.y + y].id != 7)
 						CalculateFace (x, y, ref chunkData, ref squareCount, ref squareCountCollider, 1);
 
 					// Calculate bottom
@@ -332,26 +338,46 @@ public class WorldGeneration : MonoBehaviour
 		switch (worldBlocks [chunkData.x + x, chunkData.y + y].id) // Insert triangles into correct chunkData.triangles
 		{
 			case 1: // Grass
-				chunkData.triangles [0].AddRange (tempTriangles.ToArray ());
+				{	
+					if (side == 1 || side == 2)
+						chunkData.triangles [0].AddRange (tempTriangles.ToArray ());
+					else
+						chunkData.triangles [1].AddRange (tempTriangles.ToArray ());
+				}
 				break;
 			case 2: // Dirt
-				chunkData.triangles [1].AddRange (tempTriangles.ToArray ());
+				{
+					chunkData.triangles [2].AddRange (tempTriangles.ToArray ());
+				}
 				break;
 			case 3: // Stone
-				chunkData.triangles [2].AddRange (tempTriangles.ToArray ());
+				{
+					chunkData.triangles [3].AddRange (tempTriangles.ToArray ());
+				}	
 				break;
 			case 4: // Cobblestone
-				chunkData.triangles [3].AddRange (tempTriangles.ToArray ());
+				{
+					chunkData.triangles [4].AddRange (tempTriangles.ToArray ());
+				}
 				break;
 			case 5: // Wood
-				chunkData.triangles [4].AddRange (tempTriangles.ToArray ());
+				{			
+					if (side == 1 || side == 2)
+						chunkData.triangles [5].AddRange (tempTriangles.ToArray ());
+					else
+						chunkData.triangles [6].AddRange (tempTriangles.ToArray ());
+				}
 				break;
 			case 6: // Planks
-				chunkData.triangles [5].AddRange (tempTriangles.ToArray ());
-			break;
+				{
+					chunkData.triangles [7].AddRange (tempTriangles.ToArray ());
+				}
+				break;
 			case 7: // Leaves
-				chunkData.triangles [6].AddRange (tempTriangles.ToArray ());
-			break;
+				{
+					chunkData.triangles [8].AddRange (tempTriangles.ToArray ());
+				}
+				break;
 		}
         
         // Add UV
@@ -380,7 +406,7 @@ public class WorldGeneration : MonoBehaviour
         chunk.transform.parent = this.transform;
 
         // Set submesh data
-        mesh.subMeshCount = 8;
+        mesh.subMeshCount = 9;
 
         // Insert data
         mesh.vertices = chunkData.vertices.ToArray();
@@ -391,6 +417,8 @@ public class WorldGeneration : MonoBehaviour
         mesh.SetTriangles(chunkData.triangles[4], 4);
 		mesh.SetTriangles(chunkData.triangles[5], 5);
 		mesh.SetTriangles(chunkData.triangles[6], 6);
+		mesh.SetTriangles(chunkData.triangles[7], 7);
+		mesh.SetTriangles(chunkData.triangles[8], 8);
         mesh.uv = chunkData.uv.ToArray();
 
 		// Collider mesh
@@ -462,6 +490,19 @@ public class WorldGeneration : MonoBehaviour
 	{
 		GUI.Label (new Rect(10, 10, 100, 23), Time.deltaTime.ToString());
 	}
+
+	void OnDrawGizmos ()
+	{
+		for (int x = 0; x < worldWidth * chunkSize; x++)
+		{
+			for (int y = 0; y < worldHeight * chunkSize; y++)
+			{
+				if (worldBlocks[x, y].damage == 100)
+
+					Gizmos.DrawSphere(new Vector3(x + .5f, y + .5f, 0), .5f);
+			}
+		}
+	}
 }
 
 [Serializable]
@@ -470,6 +511,8 @@ public class Block
 
     public string name; // Block name
     public int id; // Block ID
+
+	public float damage;	
 
 }
 
