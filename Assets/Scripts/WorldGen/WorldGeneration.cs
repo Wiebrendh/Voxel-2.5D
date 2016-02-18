@@ -300,28 +300,21 @@ public class WorldGeneration : MonoBehaviour
 		}
 
         chunkData.vertices.AddRange(tempVertices); // Visual vertices
+		chunkData.colliderVertices.AddRange(tempVertices); // Collider vertices        
 
-		// Only add if this is not the front face
-		if (side != 0)
-        	chunkData.colliderVertices.AddRange(tempVertices); // Collider vertices
-        
-		// Only add if this is not the front face
-		if (side != 0)
+		// Triangles for collider
+		List<int> colliderTriangles = new List<int>();
+		colliderTriangles.AddRange(new int[]
 		{
-			// Triangles for collider
-			List<int> colliderTriangles = new List<int>();
-			colliderTriangles.AddRange(new int[]
-			{
-				squareCountCollider * 4,
-				(squareCountCollider * 4) + 1,
-				(squareCountCollider * 4) + 3,
-				(squareCountCollider * 4) + 1,
-				(squareCountCollider * 4) + 2,
-				(squareCountCollider * 4) + 3
-			}); 
-
-			chunkData.colliderTriangles.AddRange(colliderTriangles.ToArray()); // Collider triangles 
-		}
+			squareCountCollider * 4,
+			(squareCountCollider * 4) + 1,
+			(squareCountCollider * 4) + 3,
+			(squareCountCollider * 4) + 1,
+			(squareCountCollider * 4) + 2,
+			(squareCountCollider * 4) + 3
+		}); 
+		chunkData.colliderTriangles.AddRange(colliderTriangles.ToArray()); // Collider triangles
+		
 
 		// Add triangles
 		List<int> tempTriangles = new List<int>();
@@ -391,8 +384,7 @@ public class WorldGeneration : MonoBehaviour
         
         // Increase squareCount                
         squareCount++;
-		if (side != 0)
-			squareCountCollider++;
+		squareCountCollider++;
 
     } // CalculateFace 
                     
@@ -432,6 +424,7 @@ public class WorldGeneration : MonoBehaviour
 		chunkCollider.transform.parent = chunk.transform;
 		chunkCollider.transform.position = chunk.transform.position;
 		chunkCollider.name = "Collider";
+		chunkCollider.tag = "Chunk";
 
         // Do other shit
         mesh.RecalculateNormals();
@@ -444,6 +437,7 @@ public class WorldGeneration : MonoBehaviour
 		if (UnityEngine.Random.Range (0, 11) == 0)
 			return;
 
+		// List of leave blocks
 		List<Vector2> temp = new List<Vector2> ();
 		temp.AddRange (new Vector2[] 
 		{
@@ -489,22 +483,6 @@ public class WorldGeneration : MonoBehaviour
 	void OnGUI ()
 	{
 		GUI.Label (new Rect(10, 10, 100, 23), Time.deltaTime.ToString());
-	}
-
-	void OnDrawGizmos ()
-	{
-		if (!Application.isPlaying)
-			return;
-
-		for (int x = 0; x < worldWidth * chunkSize; x++)
-		{
-			for (int y = 0; y < worldHeight * chunkSize; y++)
-			{
-				if (worldBlocks[x, y].damage == 100)
-
-					Gizmos.DrawSphere(new Vector3(x + .5f, y + .5f, 0), .5f);
-			}
-		}
 	}
 }
 
