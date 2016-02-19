@@ -11,13 +11,13 @@ public class WorldGeneration : MonoBehaviour
     [SerializeField] public int worldHeight;
     
     // Blocks and biomes 
-    [SerializeField] Block[] blocks;
+    [SerializeField] public Block[] blocks;
     [SerializeField] Biome[] biomes;
     [SerializeField] Material[] materials;    
     
     // World data
     Biome[] worldBiomes;
-    Block[,] worldBlocks;
+    public Block[,] worldBlocks;
     GameObject[,] worldChunks;
     int chunkCount;
      
@@ -25,8 +25,36 @@ public class WorldGeneration : MonoBehaviour
     bool doneCreatingChunks;
     List<ChunkMeshData> queu = new List<ChunkMeshData>();
 	[SerializeField] int maxChunkUpdatesPerFrame;
+
+	// TEST
+	public GameObject test;
     
-    void Start ()
+	void Start ()
+	{
+		CreateWorld ();
+
+	} // Start
+
+	void Update ()
+	{
+		// Check if generation chunks is done
+		if (queu.Count == chunkCount)
+			doneCreatingChunks = true;
+		
+		// Create/update chunks
+		for (int i = 0; i < maxChunkUpdatesPerFrame; i++) 
+		{
+			// Return if queu is empty
+			if (queu.Count <= 0)
+				break;
+			
+			CreateChunkMesh(queu[0]);
+			queu.RemoveAt(0);
+		}
+		
+	} // Update
+
+    void CreateWorld ()
     {
         // Calculate chunkCount
         chunkCount = worldWidth * worldHeight;
@@ -132,61 +160,28 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int y = 0; y < worldHeight; y++)
             {
-                CalculateChunkMeshData(x, y);
+                CalculateChunkMeshData(x, y, false);
             }
         }
 
-    } // Start
+    } // CreateWorld
     
-    void Update ()
-    {
-        // Check if generation chunks is done
-        if (queu.Count == chunkCount)
-            doneCreatingChunks = true;
-
-		// Create/update chunks
-		for (int i = 0; i < maxChunkUpdatesPerFrame; i++) 
-		{
-			// Return if queu is empty
-			if (queu.Count <= 0)
-				break;
-
-			CreateChunkMesh(queu[0]);
-			queu.RemoveAt(0);
-		}
-
-		/// TESTST
-		if (Input.GetKeyDown (KeyCode.P))
-		{
-			worldBlocks [0, 0].damage--;
-			Debug.Log(worldBlocks [0, 0].damage);
-		}
-
-    } // Update
-    
-    [Serializable]
-    public struct ChunkMeshData
-    {
-        public int x, y;
-        
-        // Visual
-        public List<Vector3> vertices;
-        public List<int>[] triangles;
-        public List<Vector2> uv;
-        
-        // Collider
-        public List<Vector3> colliderVertices;
-        public List<int> colliderTriangles;
-
-    } // ChunkMeshData
-    
-    void CalculateChunkMeshData (int startX, int startY)
+	public void UpdateChunk (int chunkX, int chunkY)
+	{
+		//Destroy (GameObject.Find("Chunk(" + chunkX * chunkSize + "|" + chunkY * chunkSize + ")"));
+		CalculateChunkMeshData (chunkX, chunkY, true);
+	}   
+       
+    void CalculateChunkMeshData (int chunkX, int chunkY, bool destroyOld)
     {
         ChunkMeshData chunkData = new ChunkMeshData();
 
         // Set chunkData position
-        chunkData.x = startX * chunkSize;
-        chunkData.y = startY * chunkSize;
+		chunkData.x = chunkX * chunkSize;
+		chunkData.y = chunkY * chunkSize;
+	
+		// Destroy old chunk
+		chunkData.destroyOld = destroyOld;
 
         // Visual data
         chunkData.vertices = new List<Vector3>();
@@ -429,6 +424,13 @@ public class WorldGeneration : MonoBehaviour
         // Do other shit
         mesh.RecalculateNormals();
 
+		// Remove old chunk, if destroyOld == true
+		if (chunkData.destroyOld)
+		{
+			string name = "Chunk(" + chunkData.x + "|" + chunkData.y + ")";
+			Destroy(GameObject.Find(name));
+		}
+
     } // CreateChunkMesh
 
 	void InsertTree (int x, int y)
@@ -484,6 +486,23 @@ public class WorldGeneration : MonoBehaviour
 	{
 		GUI.Label (new Rect(10, 10, 100, 23), Time.deltaTime.ToString());
 	}
+}
+
+[Serializable]
+public struct ChunkMeshData
+{
+	public int x, y;
+	public bool destroyOld;
+	
+	// Visual
+	public List<Vector3> vertices;
+	public List<int>[] triangles;
+	public List<Vector2> uv;
+	
+	// Collider
+	public List<Vector3> colliderVertices;
+	public List<int> colliderTriangles;
+	
 }
 
 [Serializable]
