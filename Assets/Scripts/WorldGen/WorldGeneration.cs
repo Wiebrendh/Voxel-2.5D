@@ -19,10 +19,8 @@ public class WorldGeneration : MonoBehaviour
     Biome[] worldBiomes;
     public Block[,] worldBlocks;
     GameObject[,] worldChunks;
-    int chunkCount;
      
     // Generation data
-    bool doneCreatingChunks;
     List<ChunkMeshData> queu = new List<ChunkMeshData>();
 	[SerializeField] int maxChunkUpdatesPerFrame;
 
@@ -37,10 +35,6 @@ public class WorldGeneration : MonoBehaviour
 
 	void Update ()
 	{
-		// Check if generation chunks is done
-		if (queu.Count == chunkCount)
-			doneCreatingChunks = true;
-		
 		// Create/update chunks
 		for (int i = 0; i < maxChunkUpdatesPerFrame; i++) 
 		{
@@ -56,9 +50,6 @@ public class WorldGeneration : MonoBehaviour
 
     void CreateWorld ()
     {
-        // Calculate chunkCount
-        chunkCount = worldWidth * worldHeight;
-        
         // Calculate width and assign world 2D array
         int width = worldWidth * chunkSize;
         worldBlocks = new Block[width, worldHeight * chunkSize];
@@ -74,7 +65,6 @@ public class WorldGeneration : MonoBehaviour
 
         // Set biomes
         worldBiomes = new Biome[worldWidth];
-		bool generateForest = true;
         int wantedLength = 0;
         Biome biomeType = new Biome();
         for (int b = 0; b < worldBiomes.Length; b++)
@@ -168,8 +158,10 @@ public class WorldGeneration : MonoBehaviour
     
 	public void UpdateChunk (int chunkX, int chunkY)
 	{
-		//Destroy (GameObject.Find("Chunk(" + chunkX * chunkSize + "|" + chunkY * chunkSize + ")"));
+
 		CalculateChunkMeshData (chunkX, chunkY, true);
+
+		// Check if it is on the side of a chunk
 	}   
        
     void CalculateChunkMeshData (int chunkX, int chunkY, bool destroyOld)
@@ -327,8 +319,10 @@ public class WorldGeneration : MonoBehaviour
 		{
 			case 1: // Grass
 				{	
-					if (side == 1 || side == 2)
+					if (side == 1)
 						chunkData.triangles [0].AddRange (tempTriangles.ToArray ());
+					else if (side == 2)
+						chunkData.triangles [2].AddRange (tempTriangles.ToArray ());
 					else
 						chunkData.triangles [1].AddRange (tempTriangles.ToArray ());
 				}
