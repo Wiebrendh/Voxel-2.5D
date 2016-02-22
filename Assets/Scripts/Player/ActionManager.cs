@@ -54,10 +54,4 @@ public class ActionManager : MonoBehaviour
 			}
 		}
 	}
-
-	void OnDrawGizmos ()
-	{
-		// Draw currentSelectedBlock
-		Gizmos.DrawSphere (new Vector3(currentSelectedBlock.x + .5f, currentSelectedBlock.y + .5f, -.5f), .5f);
-	}
 }

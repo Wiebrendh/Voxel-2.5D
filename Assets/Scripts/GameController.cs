@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameController : MonoBehaviour
 {
-/*
+
     [Header("Scripts")]
     public WorldGeneration world;
     public GameCamera gameCamera;
@@ -20,15 +20,7 @@ public class GameController : MonoBehaviour
 
 	void Start ()
     {
-        // Calculate spawnpoint for player
-        spawnPoint = CalculateSpawn();
-
-        // Set camera to correct position
-        camera.transform.position = new Vector3(spawnPoint.x, spawnPoint.y, -12.5f);
-
-        // Spawn player
-        player = Instantiate(playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
-        gameCamera.player = player;
+               
 	}
 	
 	void Update ()
@@ -36,14 +28,31 @@ public class GameController : MonoBehaviour
 	    
 	}
 
-    Vector2 CalculateSpawn ()
+    public void CalculateSpawn ()
     {
         Vector2 temp = Vector2.zero;
 
         // Get the x spawnpoint
-        temp.x = Mathf.RoundToInt((world.chunkWidth * world.worldWidthInChunks) / 2);
-        temp.y = 100; // HAVE TO CALCULATE THE FIRST AVAILABLE Y TO STAND ON
+        temp.x = Mathf.RoundToInt((world.worldWidth * world.chunkSize) / 2);
+        
+		for (int y = 0; y < world.worldHeight * world.chunkSize; y++)
+		{
+			if (world.worldBlocks[(int)temp.x, y].id == 0)
+			{
+				temp.y = y;
+				break;
+			}
+		}
 
-        return temp;
-    }*/
+		spawnPoint = temp;
+		SpawnPlayer();
+    }
+
+	void SpawnPlayer ()
+	{
+		// Spawn player
+		player = Instantiate(playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
+		camera.transform.position = new Vector3 (player.transform.position.x, player.transform.position.y + 1.5f, -30f);
+		gameCamera.target = player;
+	}
 }

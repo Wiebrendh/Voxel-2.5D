@@ -1,16 +1,21 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
+
+public enum LoadingActions { CreatingTerrain, CreatingChunks };
 
 public class WorldGeneration : MonoBehaviour 
 {
 
-    // Generation data
+	GameController game;
+
+	[Header("Generation data")]
     [SerializeField] public int chunkSize;
     [SerializeField] public int worldWidth;
     [SerializeField] public int worldHeight;
     
-    // Blocks and biomes 
+	[Header("Blocks and biomes")]
     [SerializeField] public Block[] blocks;
     [SerializeField] Biome[] biomes;
     [SerializeField] Material[] materials;    
@@ -20,15 +25,21 @@ public class WorldGeneration : MonoBehaviour
     public Block[,] worldBlocks;
     GameObject[,] worldChunks;
      
-    // Generation data
-    List<ChunkMeshData> queu = new List<ChunkMeshData>();
+	[Header("Chunk queu")]
 	[SerializeField] int maxChunkUpdatesPerFrame;
+	[SerializeField] List<ChunkMeshData> queu = new List<ChunkMeshData>();
 
-	// TEST
-	public GameObject test;
+	[Header("Loading stuff")]
+	public Text text;
+	public Slider slider;
+	LoadingActions currentAction;
+	public FadeOut loadingUIFade;
+	public int chunksCreated;
+	bool doneStartup;
     
 	void Start ()
 	{
+		game = GetComponentInParent<GameController>();
 		CreateWorld ();
 
 	} // Start
@@ -44,12 +55,28 @@ public class WorldGeneration : MonoBehaviour
 			
 			CreateChunkMesh(queu[0]);
 			queu.RemoveAt(0);
+			chunksCreated++;
 		}
+
+		// Check if script is done creating chunks
+		if (chunksCreated == worldHeight * worldWidth && !doneStartup)
+		{
+			doneStartup = true;
+			game.CalculateSpawn();
+			loadingUIFade.fade = true;
+		}
+
+		if (!doneStartup)
+			UpdateLoadingScreen ();
 		
 	} // Update
 
     void CreateWorld ()
     {
+		// Update action
+		currentAction = LoadingActions.CreatingTerrain;
+		UpdateLoadingScreen ();
+
         // Calculate width and assign world 2D array
         int width = worldWidth * chunkSize;
         worldBlocks = new Block[width, worldHeight * chunkSize];
@@ -145,8 +172,10 @@ public class WorldGeneration : MonoBehaviour
 			}
         }
         
-        // Loop to create chunks
-        for (int x = 0; x < worldWidth; x++)
+		// Loop to create chunks
+		currentAction = LoadingActions.CreatingChunks;
+		UpdateLoadingScreen ();
+		for (int x = 0; x < worldWidth; x++)
         {
             for (int y = 0; y < worldHeight; y++)
             {
@@ -158,7 +187,6 @@ public class WorldGeneration : MonoBehaviour
     
 	public void UpdateChunk (int chunkX, int chunkY)
 	{
-
 		CalculateChunkMeshData (chunkX, chunkY, true);
 
 		// Check if it is on the side of a chunk
@@ -476,9 +504,28 @@ public class WorldGeneration : MonoBehaviour
 		}
 	}
 
-	void OnGUI ()
+	void UpdateLoadingScreen ()
 	{
-		GUI.Label (new Rect(10, 10, 100, 23), Time.deltaTime.ToString());
+		// Update LoadingGame UI
+		if (!doneStartup)
+		{
+			switch (currentAction)
+			{
+				case LoadingActions.CreatingTerrain:
+				{
+					slider.value = 0;
+					text.text = "Creating terrain.";	
+				}
+					break;
+				case LoadingActions.CreatingChunks:
+				{
+					slider.value = chunksCreated;
+					slider.maxValue = worldWidth * worldHeight;
+					text.text = "Creating chunks. (" + chunksCreated + "/" + worldHeight * worldWidth + ")";	
+				}
+				break;
+			}
+		}
 	}
 }
 
