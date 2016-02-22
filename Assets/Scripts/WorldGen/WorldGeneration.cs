@@ -185,11 +185,23 @@ public class WorldGeneration : MonoBehaviour
 
     } // CreateWorld
     
-	public void UpdateChunk (int chunkX, int chunkY)
+	public void UpdateChunk (int chunkX, int chunkY, float x, float y)
 	{
 		CalculateChunkMeshData (chunkX, chunkY, true);
 
 		// Check if it is on the side of a chunk
+		if (x - Math.Truncate(x) == 0) // -x
+			CalculateChunkMeshData (chunkX - 1, chunkY, true);
+
+		if (x - Math.Truncate(x) == .875f) // +x
+			CalculateChunkMeshData (chunkX + 1, chunkY, true);
+
+		if (y - Math.Truncate(y) == 0) // -y
+			CalculateChunkMeshData (chunkX, chunkY - 1, true);
+		
+		if (y - Math.Truncate(y) == .875f) // +y
+			CalculateChunkMeshData (chunkX, chunkY + 1, true);
+
 	}   
        
     void CalculateChunkMeshData (int chunkX, int chunkY, bool destroyOld)

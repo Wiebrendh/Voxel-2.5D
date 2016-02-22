@@ -50,7 +50,7 @@ public class ActionManager : MonoBehaviour
 			if (Input.GetButtonDown("Fire1"))
 			{
 				worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y] = worldGen.blocks[0];
-				worldGen.UpdateChunk((int)(currentSelectedBlock.x / worldGen.chunkSize), (int)(currentSelectedBlock.y / worldGen.chunkSize));
+				worldGen.UpdateChunk((int)(currentSelectedBlock.x / worldGen.chunkSize), (int)(currentSelectedBlock.y / worldGen.chunkSize), currentSelectedBlock.x / 8, currentSelectedBlock.y / 8);
 			}
 		}
 	}
