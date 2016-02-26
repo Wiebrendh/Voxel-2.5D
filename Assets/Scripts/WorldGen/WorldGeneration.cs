@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-public enum LoadingActions { CreatingTerrain, CreatingChunks };
+public enum LoadingActions { CreatingTerrain, InsertingCaves, CreatingChunks };
 
 public class WorldGeneration : MonoBehaviour 
 {
@@ -18,7 +18,13 @@ public class WorldGeneration : MonoBehaviour
 	[Header("Blocks and biomes")]
     [SerializeField] public Block[] blocks;
     [SerializeField] Biome[] biomes;
-    [SerializeField] Material[] materials;    
+    [SerializeField] Material[] materials; 
+
+	[Header("Caves generation")]
+	[SerializeField][Range(1, 16)] int caveChance;	
+	[SerializeField][Range(1, 6)] int caveDifference;
+	[SerializeField][Range(40, 60)] int randomFillPercent;
+	[SerializeField][Range(1, 256)] int minAirInCave;
     
     // World data
     Biome[] worldBiomes;
@@ -34,6 +40,7 @@ public class WorldGeneration : MonoBehaviour
 	public Slider slider;
 	LoadingActions currentAction;
 	public FadeOut loadingUIFade;
+	public int cavesCreated;
 	public int chunksCreated;
 	bool doneStartup;
     
@@ -168,6 +175,45 @@ public class WorldGeneration : MonoBehaviour
 					int posY = (int)worldGenGrass.Evaluate(posX) + 1;
 
 					InsertTree(posX, posY);
+				}
+			}
+
+			// Insert caves
+			int next = 5;
+			for (int _x = 5; _x < worldWidth * chunkSize - 16; _x++)
+			{
+				if (_x == next)
+				{
+					// Calculate next cave location
+					next += UnityEngine.Random.Range(caveChance - caveDifference, caveChance + caveDifference);
+
+					// Create cave
+					Block[,] temp = GenerateCave();					
+					int height = UnityEngine.Random.Range(1, 64);
+					
+					// Check if cave does not touch dirt, if yes, cancel placement
+					bool invalid = false;
+					for (int x = 0; x < 16; x++)
+					{
+						for (int y = 0; y < 16; y++)
+						{
+							if (worldBlocks[x + _x, y + height].id != 0 && worldBlocks[x + _x, y + height].id != 3)
+								invalid = true;
+						}
+					}
+
+					// Insert cave
+					if (!invalid)
+					{
+						for (int x = 0; x < 16; x++)
+						{
+							for (int y = 0; y < 16; y++)
+							{
+								if (temp[x, y].id == 0)
+									worldBlocks[x + _x, y + height] = temp[x, y];
+							}
+						}
+					}
 				}
 			}
         }
@@ -516,6 +562,84 @@ public class WorldGeneration : MonoBehaviour
 		}
 	}
 
+	Block[,] GenerateCave ()
+	{
+		// Create temp storage
+		Block[,] temp = new Block[16, 16];
+		
+		// Fill map randomly
+		System.Random pseudoRandom = new System.Random(UnityEngine.Random.Range(0, 99999));		
+		for (int x = 0; x < 16; x ++) 
+		{
+			for (int y = 0; y < 16; y ++) 
+			{
+				if (x == 0 || x == 15 || y == 0 || y == 15) 
+				{
+					temp[x,y] = blocks[4];
+				}
+				else {
+					temp[x,y] = (pseudoRandom.Next(0,100) < randomFillPercent)? blocks[3] : blocks[0];
+				}
+			}
+		}
+		
+		// Smooth the map
+		for (int i = 0; i < 5; i++)
+		{
+			for (int x = 0; x < 16; x ++) 
+			{
+				for (int y = 0; y < 16; y ++) 
+				{
+					int neighbourWallTiles = GetSurroundingWallCount(x,y, temp);
+					
+					if (neighbourWallTiles > 4)
+						temp[x,y] = blocks[3];
+					else if (neighbourWallTiles < 4)
+						temp[x,y] = blocks[0];				
+				}
+			}
+		}
+
+		// Check amount of air in cave, otherwise, redo
+		int amount = 0;
+		for (int x = 0; x < 16; x ++) 
+		{
+			for (int y = 0; y < 16; y ++) 
+			{
+				if (temp[x, y].id == 0)
+					amount++;
+			}
+		}
+		if (minAirInCave > amount)
+			temp = GenerateCave ();
+
+		return temp;
+	}
+	
+	int GetSurroundingWallCount(int gridX, int gridY, Block[,] temp) 
+	{
+		int wallCount = 0;
+		for (int neighbourX = gridX - 1; neighbourX <= gridX + 1; neighbourX ++) 
+		{
+			for (int neighbourY = gridY - 1; neighbourY <= gridY + 1; neighbourY ++) 
+			{
+				if (neighbourX >= 0 && neighbourX < 16 && neighbourY >= 0 && neighbourY < 16) 
+				{
+					if (neighbourX != gridX || neighbourY != gridY) 
+					{
+						wallCount += (temp[neighbourX,neighbourY].id == blocks[0].id)? 0 : 1;		
+					}
+				}
+				else 
+				{
+					wallCount ++;
+				}
+			}
+		}
+		
+		return wallCount;
+	}
+
 	void UpdateLoadingScreen ()
 	{
 		// Update LoadingGame UI
@@ -528,12 +652,19 @@ public class WorldGeneration : MonoBehaviour
 					slider.value = 0;
 					text.text = "Creating terrain.";	
 				}
-					break;
+				break;
 				case LoadingActions.CreatingChunks:
 				{
 					slider.value = chunksCreated;
 					slider.maxValue = worldWidth * worldHeight;
 					text.text = "Creating chunks. (" + chunksCreated + "/" + worldHeight * worldWidth + ")";	
+				}
+				break;	
+				case LoadingActions.InsertingCaves:
+				{
+					slider.value = 1;
+					slider.maxValue = 1;
+					text.text = "Creating caves. (" + cavesCreated + ")";	
 				}
 				break;
 			}
