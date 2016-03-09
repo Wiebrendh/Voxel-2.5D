@@ -5,7 +5,7 @@ public class ActionManager : MonoBehaviour
 {
 
 	public WorldGeneration worldGen;
-
+	public int test;
 	public Vector2 currentSelectedBlock;
 
 	void Start () 
@@ -29,7 +29,7 @@ public class ActionManager : MonoBehaviour
 			currentSelectedBlock = hit.point;
 
 			// Y Axis
-			if ((currentSelectedBlock.y % 1) == 0) // Get correct block
+			if ((currentSelectedBlock.y % 1) == 0) // Get correct block y axis
 			{
 				if (worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].id == worldGen.blocks[0].id)
 					currentSelectedBlock.y = (int)currentSelectedBlock.y - 1;
@@ -38,7 +38,7 @@ public class ActionManager : MonoBehaviour
 				currentSelectedBlock.y = (int)currentSelectedBlock.y;
 
 			// X Axis
-			if ((currentSelectedBlock.x % 1) == 0) // Get correct block
+			if ((currentSelectedBlock.x % 1) == 0) // Get correct block x axis
 			{
 				if (worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].id == worldGen.blocks[0].id)
 					currentSelectedBlock.x = (int)currentSelectedBlock.x - 1;
@@ -49,9 +49,10 @@ public class ActionManager : MonoBehaviour
 			// // Do damage to the block
 			if (Input.GetButtonDown("Fire1"))
 			{
-				worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y] = worldGen.blocks[0];
+				worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].damage--;
 				worldGen.UpdateChunk((int)(currentSelectedBlock.x / worldGen.chunkSize), (int)(currentSelectedBlock.y / worldGen.chunkSize), currentSelectedBlock.x / 8, currentSelectedBlock.y / 8);
 			}
+			test = (int)worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].damage;
 		}
 	}
 }

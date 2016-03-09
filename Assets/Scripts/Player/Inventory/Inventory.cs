@@ -8,46 +8,56 @@ public class Inventory : MonoBehaviour
 
 	public List<Item> items = new List<Item>();
 
-	void Start () 
-	{
-
-	}
-
-	void Update () 
-	{
-		
-	}
 }
 
 [System.Serializable]
-public class Item 
+public class Item : System.ICloneable
 {
+
 	public string name;
 	public int id;
 	public ItemType type;
 
-	// Tool data
-	public float dps;
-
-	// Block data
-	public int damage;
-
-	public Item (string name, int id, ItemType type) // Tool
+	public Item () { }
+	public Item (string name, int id, ItemType type)
 	{
 		this.name = name;
 		this.id = id;
 		this.type = type;
 	}
+
+	public object Clone ()
+	{
+		return this.MemberwiseClone();
+	}
 }
 
 [System.Serializable]
-public class Tool
+public class Tool : Item
 {
 
-	public Item item;
+	public float dps;
 
-	public Tool (Item item)
+	public Tool (string name, int id, ItemType type, float dps)
 	{
-		this.item = item;
+		this.name = name;
+		this.id = id;
+		this.type = type;
+		this.dps = dps;
+	}
+}
+
+[System.Serializable]
+public class Block : Item
+{
+	
+	public float damage;
+	
+	public Block (string name, int id, ItemType type)
+	{
+		this.name = name;
+		this.id = id;
+		this.type = type;
+		this.damage = 100;
 	}
 }

@@ -93,7 +93,7 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                worldBlocks[x, y] = blocks[0];
+                worldBlocks[x, y] = (Block)blocks[0].Clone();
             }
         }
 
@@ -151,18 +151,18 @@ public class WorldGeneration : MonoBehaviour
             for (int l = 0; l < chunkSize * worldWidth; l++)
             {
 				// Grass
-				worldBlocks[l, (int)worldGenGrass.Evaluate(l)] = blocks[1];
+				worldBlocks[l, (int)worldGenGrass.Evaluate(l)] = (Block)blocks[1].Clone ();
 
 				// Dirt
 				for (int d = 0; d < (int)worldGenGrass.Evaluate (l); d++) 
 				{
-					worldBlocks [l, d] = blocks [2];
+					worldBlocks [l, d] = (Block)blocks [2].Clone();
 				}
 
 				// Stone
 				for (int s = 0; s < (int)worldGenDirt.Evaluate (l); s++) 
 				{
-					worldBlocks [l, s] = blocks [3];
+					worldBlocks [l, s] = (Block)blocks [3].Clone();
 				}                
             }
 
@@ -687,17 +687,6 @@ public struct ChunkMeshData
 	public List<Vector3> colliderVertices;
 	public List<int> colliderTriangles;
 	
-}
-
-[Serializable]
-public struct Block
-{
-
-    public string name; // Block name
-    public int id; // Block ID
-
-	public float damage;	
-
 }
 
 [Serializable]
