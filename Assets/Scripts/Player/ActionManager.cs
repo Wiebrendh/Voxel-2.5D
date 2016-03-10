@@ -5,8 +5,11 @@ public class ActionManager : MonoBehaviour
 {
 
 	public WorldGeneration worldGen;
-	public int test;
+
 	public Vector2 currentSelectedBlock;
+
+	[Header("Test data")]
+	public int test;
 
 	void Start () 
 	{
@@ -49,8 +52,19 @@ public class ActionManager : MonoBehaviour
 			// // Do damage to the block
 			if (Input.GetButtonDown("Fire1"))
 			{
-				worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].damage--;
-				worldGen.UpdateChunk((int)(currentSelectedBlock.x / worldGen.chunkSize), (int)(currentSelectedBlock.y / worldGen.chunkSize), currentSelectedBlock.x / 8, currentSelectedBlock.y / 8);
+				int x = (int)currentSelectedBlock.x, z = (int)currentSelectedBlock.y;
+				worldGen.worldBlocks[x, z].TakeDamage();
+
+				// Check if block is destroyed
+				if (worldGen.worldBlocks[x, z].damage <= 0)
+				{
+					// Insert air block
+					worldGen.worldBlocks[x, z] = (Block)worldGen.blocks[0].Clone();
+
+					// Update chunk				
+					worldGen.UpdateChunk((int)(currentSelectedBlock.x / worldGen.chunkSize), (int)(currentSelectedBlock.y / worldGen.chunkSize), currentSelectedBlock.x / 8, currentSelectedBlock.y / 8);
+				}
+
 			}
 			test = (int)worldGen.worldBlocks[(int)currentSelectedBlock.x, (int)currentSelectedBlock.y].damage;
 		}

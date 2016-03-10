@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public enum ItemType { Tool, Block };
 
+
 public class Inventory : MonoBehaviour 
 {
 
@@ -51,13 +52,19 @@ public class Tool : Item
 public class Block : Item
 {
 	
-	public float damage;
+	public int damage;
+	public Vector2 position;
 	
 	public Block (string name, int id, ItemType type)
 	{
 		this.name = name;
 		this.id = id;
 		this.type = type;
-		this.damage = 100;
+		this.damage = 10;
+	}
+
+	public void TakeDamage ()
+	{
+		damage--;
 	}
 }

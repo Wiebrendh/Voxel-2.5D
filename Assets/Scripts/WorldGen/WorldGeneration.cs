@@ -94,6 +94,7 @@ public class WorldGeneration : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 worldBlocks[x, y] = (Block)blocks[0].Clone();
+				worldBlocks[x, y].position = new Vector2(x, y);
             }
         }
 
@@ -151,12 +152,13 @@ public class WorldGeneration : MonoBehaviour
             for (int l = 0; l < chunkSize * worldWidth; l++)
             {
 				// Grass
-				worldBlocks[l, (int)worldGenGrass.Evaluate(l)] = (Block)blocks[1].Clone ();
+				worldBlocks [l, (int)worldGenGrass.Evaluate(l)] = (Block)blocks[1].Clone ();
 
 				// Dirt
 				for (int d = 0; d < (int)worldGenGrass.Evaluate (l); d++) 
 				{
 					worldBlocks [l, d] = (Block)blocks [2].Clone();
+					worldBlocks [l, d].position = new Vector2(l, d);
 				}
 
 				// Stone
@@ -551,14 +553,14 @@ public class WorldGeneration : MonoBehaviour
 		}
 
 		// Insert wood
-		worldBlocks[x, y] = blocks[5];
-		worldBlocks[x, y + 1] = blocks[5];
-		worldBlocks[x, y + 2] = blocks[5];
+		worldBlocks[x, y] = (Block)blocks[5].Clone();
+		worldBlocks[x, y + 1] = (Block)blocks[5].Clone();
+		worldBlocks[x, y + 2] = (Block)blocks[5].Clone();
 
 		// Insert leaves
 		foreach (Vector2 v in temp)
 		{
-			worldBlocks[(int)v.x, (int)v.y] = blocks[7];
+			worldBlocks[(int)v.x, (int)v.y] = (Block)blocks[7].Clone();
 		}
 	}
 

@@ -35,11 +35,11 @@ public class GameController : MonoBehaviour
         // Get the x spawnpoint
         temp.x = Mathf.RoundToInt((world.worldWidth * world.chunkSize) / 2);
         
-		for (int y = 0; y < world.worldHeight * world.chunkSize; y++)
+		for (int y = world.worldHeight * world.chunkSize - 1; y > 0; y--)
 		{
-			if (world.worldBlocks[(int)temp.x, y].id == 0)
+			if (world.worldBlocks[(int)temp.x, y].id != 0)
 			{
-				temp.y = y;
+				temp.y = y + 1;
 				break;
 			}
 		}
